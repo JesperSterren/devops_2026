@@ -48,3 +48,5 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           working-directory: ./api
+          test-script: npm test
+        
