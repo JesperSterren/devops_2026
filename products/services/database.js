@@ -1,0 +1,1 @@
+﻿const { MongoClient } = require('mongodb'); const uri = process.env.MONGO_URL_PRODUCTS; const client = new MongoClient(uri); const db = client.db(process.env.DB_NAME_PRODUCTS || 'products'); console.log('Products DB:', uri); module.exports = { db, client };

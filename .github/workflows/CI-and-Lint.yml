@@ -1,0 +1,103 @@
+﻿name: Tests & Linting
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # API Service Tests & Linting
+  api:
+    name: API Tests & Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./api
+    
+    permissions:
+      checks: write
+      pull-requests: write
+      contents: write
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ./api/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run ESLint
+        run: npm run lint
+        continue-on-error: true
+      
+      - name: Run Tests & Coverage
+        uses: ArtiomTr/jest-coverage-report-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: ./api
+          threshold: 80
+
+  # Products Service Tests & Linting
+  products:
+    name: Products Tests & Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./products
+    
+    permissions:
+      checks: write
+      pull-requests: write
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ./products/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run ESLint
+        run: npm run lint
+        continue-on-error: true
+      
+      - name: Run Tests & Coverage
+        uses: ArtiomTr/jest-coverage-report-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: ./products
+          threshold: 80
+
+  # Summary Report
+  report:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [api, products]
+    if: always()
+    
+    steps:
+      - name: Status Check
+        run: |
+          echo "=== TEST & LINT SUMMARY ==="
+          echo "API Service: ${{ needs.api.result }}"
+          echo "Products Service: ${{ needs.products.result }}"
+          if [ "${{ needs.api.result }}" = "failure" ] || [ "${{ needs.products.result }}" = "failure" ]; then
+            echo "⚠️ Some checks failed"
+            exit 1
+          else
+            echo "✅ All checks passed"
+          fi

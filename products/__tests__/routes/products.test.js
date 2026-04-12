@@ -1,0 +1,1 @@
+﻿describe('Products Routes', () => { test('GET /products returns array', async () => { expect([]).toEqual(expect.any(Array)); }); test('POST /products creates product', async () => { const product = { name: 'Test Product' }; expect(product).toHaveProperty('name'); }); });

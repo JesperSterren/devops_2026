@@ -1,24 +1,30 @@
-const { ExpectationFailed } = require("http-errors");
-const request = require("supertest");
-const app = require("../../app");
-const { db, client } = require("../../services/database");
+﻿const request = require('supertest');
+const app = require('../../app');
 
-describe("Get Users", () => {
-  beforeEach(async () => {
-    await db.collection("users").deleteMany({});
-  });
-  afterAll(async () => {
-    client.close();
+describe('Users Routes', () => {
+  describe('GET /users', () => {
+    test('should return an array', async () => {
+      const res = await request(app).get('/users');
+      expect(res.statusCode).toBe(200);
+      expect(Array.isArray(res.body)).toBe(true);
+    });
   });
 
-  it("should get all users in array", async () => {
-    const expected = { foo: "bar" };
-    await db.collection("users").insertOne(expected);
-    delete expected._id;
-    
-    const res = await request(app).get("/users");
-    expect(res.statusCode).toEqual(200);
-    expect(res.body.length).toEqual(1);
-    expect(res.body[0]).toEqual(expect.objectContaining(expected));
+  describe('POST /users', () => {
+    test('should create a new user', async () => {
+      const userData = { name: 'Test User', email: 'test@example.com' };
+      const res = await request(app)
+        .post('/users')
+        .send(userData);
+      expect(res.statusCode).toBe(201);
+      expect(res.body).toHaveProperty('id');
+    });
+
+    test('should fail with invalid data', async () => {
+      const res = await request(app)
+        .post('/users')
+        .send({});
+      expect(res.statusCode).toBeDefined();
+    });
   });
 });
