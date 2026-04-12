@@ -21,18 +21,18 @@ services:
       - "15672:15672"
 
   api:
-    # Mount source code for hot-reload with nodemon
+    # Mount source code for reload
     volumes:
       - ./api:/app:delegated
-      - /app/node_modules  # Exclude node_modules from mount to use container's installed packages
+      - /app/node_modules
     
-    # Override to development mode for verbose logging
+    # Override to development mode
     environment:
       NODE_ENV: development
       DEBUG: "api:*"
     
-    # Use dev script for hot-reload (nodemon - configured in api/nodemon.json)
-    command: npm run dev
+    # Use start script (production mode)
+    command: npm start
 
   products:
     volumes:
@@ -41,7 +41,7 @@ services:
     environment:
       NODE_ENV: development
       DEBUG: "products:*"
-    command: npm run dev
+    command: npm start
 
   prometheus:
     ports:
