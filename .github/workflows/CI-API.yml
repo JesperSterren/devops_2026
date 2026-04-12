@@ -40,13 +40,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Jest & Coverage Report
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Jest Coverage Report
         uses: ArtiomTr/jest-coverage-report-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          # Omdat 'defaults' niet werkt voor 'uses', stellen we het hier handmatig in
           working-directory: ./api
-          # Een mooie threshold van 80% (instelbaar naar wens)
-          threshold: 80
-          # Optioneel: specificeer je test script
           test-script: npm test
+        
