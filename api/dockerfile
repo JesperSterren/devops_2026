@@ -1,0 +1,52 @@
+FROM node:20.11-alpine AS builder
+
+LABEL version="20.11-alpine" \
+      description="DevOps API - Node.js 20.11 LTS Alpine Linux" \
+      environment="development"
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies (production only for runtime)
+RUN npm install --production
+
+# Copy application code
+COPY . .
+
+# Final stage - optimized runtime image
+FROM node:20.11-alpine
+
+LABEL maintainer="DevOps Team" \
+      version="20.11-alpine" \
+      description="DevOps API - Production Runtime"
+
+WORKDIR /app
+
+# Install dumb-init for proper signal handling in containers
+RUN apk add --no-cache dumb-init
+
+# Copy node_modules and app from builder
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app . .
+
+# Create non-root user for security
+RUN addgroup -g 1001 appuser && \
+    adduser -D -u 1001 -G appuser appuser && \
+    chown -R appuser:appuser /app
+
+USER appuser
+
+# Document the port
+EXPOSE 3000
+
+# Health check - verify API is responding
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:3000', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+
+# Default to production start; override in compose for development
+CMD ["npm", "start"]

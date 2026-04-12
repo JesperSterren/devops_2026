@@ -1,1 +1,33 @@
 api/coverage/**
+
+# Database files (persistent storage)
+db/
+db-products/
+docker-entrypoint-initdb.d/.DS_Store
+
+# Monitoring data
+prometheus-data/
+grafana-data/
+
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
+
+# Node dependencies
+/node_modules/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Docker volumes and cache
+.docker/
+*.log
+
+/api/node_modules

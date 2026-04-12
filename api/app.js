@@ -7,7 +7,13 @@ var logger = require('morgan');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 
+// Initialize Prometheus metrics
+const { initializePrometheus, requestMetrics } = require('./services/metrics');
+
 var app = express();
+
+// Initialize Prometheus
+initializePrometheus(app);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -18,6 +24,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Add metrics middleware
+app.use(requestMetrics);
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);

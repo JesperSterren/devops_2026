@@ -1,0 +1,52 @@
+# Development overrides for docker-compose.yml
+# This file is automatically merged with docker-compose.yml when using docker-compose commands
+# Use this for development features: exposed ports, volume mounts, environment overrides
+
+version: '3.8'
+
+services:
+  mongo:
+    # Expose MongoDB port for local MongoDB client tools (mongocompass, mongosh, etc.)
+    # In production, remove this override or the port mapping
+    ports:
+      - "27017:27017"
+
+  mongo-products:
+    ports:
+      - "27018:27017"
+
+  rabbitmq:
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  api:
+    # Mount source code for reload
+    volumes:
+      - ./api:/app:delegated
+      - /app/node_modules
+    
+    # Override to development mode
+    environment:
+      NODE_ENV: development
+      DEBUG: "api:*"
+    
+    # Use start script (production mode)
+    command: npm start
+
+  products:
+    volumes:
+      - ./products:/app:delegated
+      - /app/node_modules
+    environment:
+      NODE_ENV: development
+      DEBUG: "products:*"
+    command: npm start
+
+  prometheus:
+    ports:
+      - "9090:9090"
+
+  grafana:
+    ports:
+      - "3002:3000"

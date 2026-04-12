@@ -1,0 +1,8 @@
+﻿{
+  "watch": ["./bin", "./routes", "./services", "./app.js"],
+  "ignore": ["./coverage/**", "./**/*.test.js", "./node_modules/**"],
+  "env": { "NODE_ENV": "development" },
+  "ext": "js,json",
+  "delay": 500,
+  "verbose": true
+}

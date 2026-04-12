@@ -1,0 +1,12 @@
+﻿{
+  "watch": ["./bin", "./routes", "./services", "./app.js"],
+  "ignore": ["./coverage/**", "./**/*.test.js", "./**/*.spec.js", "./node_modules/**"],
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "exec": "node -r dotenv/config",
+  "script": "./bin/www",
+  "ext": "js,json",
+  "delay": 500,
+  "verbose": true
+}

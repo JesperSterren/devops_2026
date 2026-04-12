@@ -1,0 +1,152 @@
+version: '3.8'
+
+services:
+  # ==================== Databases ====================
+  
+  mongo:
+    image: mongo:7.0
+    container_name: devops_mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGO_INITDB_DATABASE: myapp
+    volumes:
+      - ./db:/data/db
+      - ./db/configdb:/data/configdb
+      - ./docker-entrypoint-initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+    networks:
+      - devops_network
+
+  mongo-products:
+    image: mongo:7.0
+    container_name: devops_mongodb_products
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGO_INITDB_DATABASE: products
+    volumes:
+      - ./db-products:/data/db
+      - ./db-products/configdb:/data/configdb
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+    networks:
+      - devops_network
+
+  # ==================== Message Queue ====================
+  
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: devops_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"     # AMQP port
+      - "15672:15672"   # Management UI
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: always
+    networks:
+      - devops_network
+
+  # ==================== Microservices ====================
+  
+  api:
+    build:
+      context: ./api
+      dockerfile: dockerfile
+    container_name: devops_api
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      MONGO_URL: mongodb://admin:admin@mongo:27017/myapp?authSource=admin
+      DB_NAME: myapp
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      NODE_ENV: production
+    depends_on:
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - devops_network
+    restart: unless-stopped
+
+  products:
+    build:
+      context: ./products
+      dockerfile: dockerfile
+    container_name: devops_products
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      MONGO_URL_PRODUCTS: mongodb://admin:admin@mongo-products:27017/products?authSource=admin
+      DB_NAME_PRODUCTS: products
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      NODE_ENV: production
+    depends_on:
+      mongo-products:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - devops_network
+    restart: unless-stopped
+
+  # ==================== Monitoring ====================
+  
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: devops_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - devops_network
+    restart: always
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: devops_grafana
+    ports:
+      - "3002:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - devops_network
+    restart: always
+
+volumes: 
+  prometheus-data:
+  grafana-data:
+
+networks:
+  devops_network:
+    driver: bridge
