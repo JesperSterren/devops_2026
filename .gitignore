@@ -30,3 +30,4 @@ build/
 .docker/
 *.log
 
+/api/node_modules
