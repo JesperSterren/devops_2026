@@ -15,8 +15,7 @@ grafana-data/
 .env.*.local
 
 # Node dependencies
-api/node_modules/
-node_modules/
+/node_modules/
 dist/
 build/
 
@@ -31,4 +30,3 @@ build/
 .docker/
 *.log
 
-.bin/
