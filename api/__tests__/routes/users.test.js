@@ -1,4 +1,16 @@
 ﻿const request = require('supertest');
+
+jest.mock('../../services/database', () => ({
+  db: {
+    collection: jest.fn(() => ({
+      find: jest.fn(() => ({
+        toArray: jest.fn().mockResolvedValue([]),
+      })),
+      insertOne: jest.fn(async () => ({ insertedId: 'mock-id' })),
+    })),
+  },
+}));
+
 const app = require('../../app');
 
 describe('Users Routes', () => {
